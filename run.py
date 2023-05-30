@@ -28,6 +28,17 @@ G.es["burned"] = False
 
 dhars_burning(G)
 
+# edges2 = [(0, 1), (0, 2),
+#           (1, 2), (1, 3),
+#           (2, 4),
+#           (3, 4)]
+
+# G = ig.Graph(edges2)
+# G.vs["divisor"] = [-10, 1, 1, 1, 1]
+# G.vs["burned"] = False
+# G.es["burned"] = False
+# dhars_burning(G)
+
 # G.vs[3]["burned"] = True
 # incidents = G.incident(3, mode="ALL")
 # for edge_id in incidents:

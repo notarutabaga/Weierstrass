@@ -36,8 +36,6 @@ def save_pic(G, step):
         edge_color=["firebrick" if burned else "steelblue" for burned in G.es["burned"]]
     )
     
-    # out.save(step + '_test.png', format="gml")
-
 # performs dhar's burning algoriothm on G
 def dhars_burning(G):
     step = 0
@@ -51,8 +49,8 @@ def dhars_burning(G):
     # choose one of the chips in debt at random
     q = random.choice(in_debt)
     
-    step += 1
     save_pic(G, step)
+    step += 1
     
     # fire from q while G is not effective away from q
     while is_effective_away(G, q.index) != True:
@@ -60,17 +58,14 @@ def dhars_burning(G):
         G.vs[q.index]["divisor"] -= G.degree(q)
         for v in G.neighbors(q): 
             G.vs[v]["divisor"] += 1
-            
-        step += 1
-        save_pic(G, step)
            
     # continue the burning and firing process until D is effective or the entire graph is burned
     while is_effective(G.vs["divisor"]) == False and is_burned(G.vs["burned"]) == False:
         G.vs["burned"] = False # reset all vertices
         G.es["burned"] = False # reset all edges
         
-        step += 1
         save_pic(G, step)
+        step += 1
         
         G.vs[q.index]["burned"] = True
         
@@ -79,15 +74,15 @@ def dhars_burning(G):
         for edge in incidents: 
             G.es[edge]["burned"] = True 
         
-        step += 1
-        save_pic(G, step)
-        
         # add all burned nodes to one list
         burned_nodes = []
         burned_nodes.append(q)
         
         # keep track of unburned neighbors of the burned nodes
         unburned_nodes = []
+        
+        save_pic(G, step)
+        step += 1
         
         # controls how far the fire spreads before firing
         spread = True
@@ -100,56 +95,63 @@ def dhars_burning(G):
                 
                 for neighbor in curr_neighbors:
                     if G.vs[neighbor.index]["burned"] == False:
-                        unburned_nodes.append(neighbor)
+                        if neighbor not in unburned_nodes:
+                            unburned_nodes.append(neighbor)
              
             # assume we cannot continue spreading      
             spread = False
     
+            # loop through each unburned neighbor to see if the fire can spread
             for node in unburned_nodes:
                 curr_incidents = G.incident(node)
                 
+                # number of incident edges burned
                 count = 0
                 for edge in curr_incidents:
                     if G.es[edge]["burned"] == True: count += 1
                 
                 # if D(v) < burned incident edges
                 if G.vs[node.index]["divisor"] < count:
-                    # add v to burned
+                    # burn the current node
                     G.vs[node.index]["burned"] = True
-                    burned_nodes.append(node)
                     
-                    # remove v from unburned
+                    if node not in burned_nodes:
+                        burned_nodes.append(node)
+                    
                     unburned_nodes.remove(node)
-                    
-                    # burn v's edges
+
                     for edge in curr_incidents:
                         G.es[edge]["burned"] = True
-                        
-                    step += 1
+                    
                     save_pic(G, step)
+                    step += 1
                     
                     # since we were able to burn another node, we may be able to spread farther
                     spread = True
         
         # fire from unburned nodes along burned edges only
         for node in unburned_nodes:
+            
             curr_neighbors = node.neighbors()
-            print("current neighbors: {curr_neighbors}")
             
             for target in curr_neighbors:
                 if G.vs[target.index]["burned"]:
                     edge = G.get_eid(node, target)
                     
                     if G.es[edge]["burned"] == True:
-                        print("firing from {node} to {target}")
+                        print("firing from {} to {}".format(node.index, target.index))
                         G.vs[node.index]["divisor"] -= 1
                         G.vs[target.index]["divisor"] += 1
                         
-                step += 1
-                save_pic(G, step)
+                        save_pic(G, step)
+                        step += 1
     
-    G.vs["burned"] = False
-    G.es["burned"] = True
-    
-    step += 1
     save_pic(G, step)
+    step += 1
+    
+    # reset
+    G.vs["burned"] = False
+    G.es["burned"] = False
+
+    save_pic(G, step)
+    step += 1
