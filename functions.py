@@ -8,7 +8,8 @@ def degree(divisor):
 # an effective divisor has all chips >= 0 (ie all are not in debt)
 def is_effective(divisor):
     for div in divisor:
-        if div < 0: return False 
+        if div < 0: 
+            return False 
     
     return True
 
@@ -16,32 +17,44 @@ def is_effective(divisor):
 def is_effective_away(G, away_from):
     for v in G.vs:
         if v.index != away_from:
-            if G.vs[v.index]["divisor"] < 0: return False
+            if G.vs[v.index]["divisor"] < 0: 
+                return False
         
     return True
 
 # checks if all vertices in the vertex set are burned
 def is_burned(burned):
     for burn in burned:
-        if burn == False: return False
+        if burn == False: 
+            return False
     
     return True 
 
-def save_pic(G, step):
+def genus(G):
+    return G.ecount() - G.vcount() + 1
+
+def save_pic(G, step, caption):
     out = ig.plot(
         G,
-        target=str(step)+".png",
+        target="fig"+str(step)+".png",
         vertex_color=["firebrick" if burned else "steelblue" for burned in G.vs["burned"]],
         vertex_label=G.vs["divisor"],
         edge_color=["firebrick" if burned else "steelblue" for burned in G.es["burned"]]
     )
+    
+    print("fig {}:".format(step))
+    print("divisor: {}".format(G.vs["divisor"]))
+    if caption != "":
+        print(caption)
+    print()
     
 # performs dhar's burning algoriothm on G
 def dhars_burning(G):
     step = 0
     
     # if D is already effective, done
-    if is_effective(G.vs["divisor"]): return G.vs["divisor"]
+    if is_effective(G.vs["divisor"]): 
+        return G.vs["divisor"]
     
     # find subset of D that is not effective
     in_debt = [v for v in G.vs if G.vs[v.index]["divisor"] < 0]
@@ -49,22 +62,22 @@ def dhars_burning(G):
     # choose one of the chips in debt at random
     q = random.choice(in_debt)
     
-    save_pic(G, step)
+    save_pic(G, step, "initial graph")
     step += 1
     
     # fire from q while G is not effective away from q
-    while is_effective_away(G, q.index) != True:
+    while not is_effective_away(G, q.index):
         # distibute deg(q) chips to each of q's neighbors
         G.vs[q.index]["divisor"] -= G.degree(q)
         for v in G.neighbors(q): 
             G.vs[v]["divisor"] += 1
            
     # continue the burning and firing process until D is effective or the entire graph is burned
-    while is_effective(G.vs["divisor"]) == False and is_burned(G.vs["burned"]) == False:
+    while not is_effective(G.vs["divisor"]) and not is_burned(G.vs["burned"]):
         G.vs["burned"] = False # reset all vertices
         G.es["burned"] = False # reset all edges
         
-        save_pic(G, step)
+        save_pic(G, step, "reset")
         step += 1
         
         G.vs[q.index]["burned"] = True
@@ -81,7 +94,7 @@ def dhars_burning(G):
         # keep track of unburned neighbors of the burned nodes
         unburned_nodes = []
         
-        save_pic(G, step)
+        save_pic(G, step, "send fire from q")
         step += 1
         
         # controls how far the fire spreads before firing
@@ -94,7 +107,7 @@ def dhars_burning(G):
                 curr_neighbors = node.neighbors()
                 
                 for neighbor in curr_neighbors:
-                    if G.vs[neighbor.index]["burned"] == False:
+                    if not G.vs[neighbor.index]["burned"]:
                         if neighbor not in unburned_nodes:
                             unburned_nodes.append(neighbor)
              
@@ -108,7 +121,8 @@ def dhars_burning(G):
                 # number of incident edges burned
                 count = 0
                 for edge in curr_incidents:
-                    if G.es[edge]["burned"] == True: count += 1
+                    if G.es[edge]["burned"]: 
+                        count += 1
                 
                 # if D(v) < burned incident edges
                 if G.vs[node.index]["divisor"] < count:
@@ -123,7 +137,7 @@ def dhars_burning(G):
                     for edge in curr_incidents:
                         G.es[edge]["burned"] = True
                     
-                    save_pic(G, step)
+                    save_pic(G, step, "{} catches fire".format(node.index))
                     step += 1
                     
                     # since we were able to burn another node, we may be able to spread farther
@@ -131,27 +145,27 @@ def dhars_burning(G):
         
         # fire from unburned nodes along burned edges only
         for node in unburned_nodes:
-            
             curr_neighbors = node.neighbors()
             
+            # check each neighbor of the current node
             for target in curr_neighbors:
                 if G.vs[target.index]["burned"]:
                     edge = G.get_eid(node, target)
                     
-                    if G.es[edge]["burned"] == True:
-                        print("firing from {} to {}".format(node.index, target.index))
+                    # only fire from an unburned node along a burned edge
+                    if G.es[edge]["burned"]:
                         G.vs[node.index]["divisor"] -= 1
                         G.vs[target.index]["divisor"] += 1
                         
-                        save_pic(G, step)
+                        save_pic(G, step, "firing from {} to {}".format(node.index, target.index))
                         step += 1
     
-    save_pic(G, step)
+    save_pic(G, step, "")
     step += 1
     
     # reset
     G.vs["burned"] = False
     G.es["burned"] = False
 
-    save_pic(G, step)
+    save_pic(G, step, "final graph")
     step += 1
