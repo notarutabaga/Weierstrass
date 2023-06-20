@@ -1,7 +1,5 @@
 import random
 import igraph as ig
-import os
-from misc import *
 
 # returns the degree of the divisor (ie sum of chips distrtibuted)
 def degree(divisor):
@@ -32,43 +30,9 @@ def is_burned(burned):
     
     return True 
 
-def genus(G):
-    return G.ecount() - G.vcount() + 1
-
-def difference(list1, list2):
-    diff = []
-    zipped = zip(list1, list2)
-    
-    for item1, item2 in zipped:
-        diff.append(item1 - item2)
-    
-    return diff
-
-def save_pic(G, graphIndex, step, caption, outputFolderCWD):
-
-    out = ig.plot(
-        G,
-        target=f"{outputFolderCWD}/graph{graphIndex}/fig{step}.png",
-        vertex_color=["firebrick" if burned else "steelblue" for burned in G.vs["burned"]],
-        vertex_label=G.vs["divisor"],
-        edge_color=["firebrick" if burned else "steelblue" for burned in G.es["burned"]]
-    )
-    
-    print("fig {}:".format(step))
-    print("divisor: {}".format(G.vs["divisor"]))
-    if caption != "":
-        print(caption)
-    print()
     
 # performs dhar's burning algoriothm on G
-def dhars_burning(G, graphIndex, outputFolderCWD):
-
-    os.mkdir(f"graph{graphIndex}")
-    step = 0
-    
-    save_pic(G, graphIndex, step, "initial graph", outputFolderCWD)
-    step += 1
-    
+def dhars_burning(G):
     # if D is already effective, done
     if is_effective(G.vs["divisor"]): 
         return G.vs["divisor"]
@@ -78,9 +42,6 @@ def dhars_burning(G, graphIndex, outputFolderCWD):
     
     # choose one of the chips in debt at random
     q = random.choice(in_debt)
-    
-    save_pic(G, graphIndex, step, "initial graph", outputFolderCWD)
-    step += 1
     
     # fire from q while G is not effective away from q
     while not is_effective_away(G, q.index):
@@ -93,9 +54,6 @@ def dhars_burning(G, graphIndex, outputFolderCWD):
     while not is_effective(G.vs["divisor"]) and not is_burned(G.vs["burned"]):
         G.vs["burned"] = False # reset all vertices
         G.es["burned"] = False # reset all edges
-        
-        save_pic(G, graphIndex, step, "reset", outputFolderCWD)
-        step += 1
         
         G.vs[q.index]["burned"] = True
         
@@ -110,9 +68,6 @@ def dhars_burning(G, graphIndex, outputFolderCWD):
         
         # keep track of unburned neighbors of the burned nodes
         unburned_nodes = []
-        
-        save_pic(G, graphIndex, step, "send fire from q", outputFolderCWD)
-        step += 1
         
         # controls how far the fire spreads before firing
         spread = True
@@ -154,9 +109,6 @@ def dhars_burning(G, graphIndex, outputFolderCWD):
                     for edge in curr_incidents:
                         G.es[edge]["burned"] = True
                     
-                    save_pic(G, graphIndex, step, "{} catches fire".format(node.index), outputFolderCWD)
-                    step += 1
-                    
                     # since we were able to burn another node, we may be able to spread farther
                     spread = True
         
@@ -173,23 +125,12 @@ def dhars_burning(G, graphIndex, outputFolderCWD):
                     if G.es[edge]["burned"]:
                         G.vs[node.index]["divisor"] -= 1
                         G.vs[target.index]["divisor"] += 1
-                        
-                        save_pic(G, graphIndex, step, "firing from {} to {}".format(node.index, target.index), outputFolderCWD)
-                        step += 1
-    
-    save_pic(G, graphIndex, step, "", outputFolderCWD)
-    step += 1
     
     # reset
     G.vs["burned"] = False
     G.es["burned"] = False
-
-    save_pic(G, graphIndex, step, "final graph", outputFolderCWD)
-    step += 1
     
-    # if dhar's ends due to reaching an effective divisor
     if is_effective(G.vs["divisor"]):
         return True 
     
-    # otherwise, the divisor reached was not effective
     return False

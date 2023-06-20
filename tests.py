@@ -1,6 +1,7 @@
 import igraph as ig
 import matplotlib.pyplot as plt
 from dhars import *
+from misc import *
 import os
 
 ig.config["plotting.backend"] = "matplotlib"
@@ -20,8 +21,8 @@ graphs = [
             (2, 4),
             (3, 4)
         ],
-        # divisor to test with (see example 2.5)
-        "divisor": [ 2, 2, 1, -1, -1 ]
+
+        "divisor": [0,-4,2,1,1]
     }
 ]
 
@@ -45,15 +46,15 @@ def recursiveDeletion(folderPath):
                 os.remove(element)
 
 
-# ## If we have previous computed outputs
-# if "outputs" in os.listdir():
+## If we have previous computed outputs
+if "outputs" in os.listdir():
 
-#     ## Recursively empty out the folders
-#     recursiveDeletion(outputsCWD)
-#     ## Go back a level to parent folder of the outputs folder
-#     os.chdir(initialCWD)
-#     ## Delete the now empty outputs folder
-#     os.rmdir("outputs")
+    ## Recursively empty out the folders
+    recursiveDeletion(outputsCWD)
+    ## Go back a level to parent folder of the outputs folder
+    os.chdir(initialCWD)
+    ## Delete the now empty outputs folder
+    os.rmdir("outputs")
 
 
 if len(graphs) > 0:
@@ -65,13 +66,6 @@ if len(graphs) > 0:
 else:
     print("There are no graphs to process!")
     exit()
-
-divs = [[0,0,0,0,0],
-        [1,0,0,0,0],
-        [0,1,0,0,0],
-        [0,0,1,0,0],
-        [0,0,0,1,0],
-        [0,0,0,0,1]]
 
 for graphIndex, graph in enumerate(graphs):
 
@@ -85,11 +79,15 @@ for graphIndex, graph in enumerate(graphs):
     # all edges and vertices start out unburned
     G.vs["burned"] = False
     G.es["burned"] = False
+    
+    k = 0
+    perms = permute(k, G.vcount())
 
-    for divIndex, div in enumerate(divs):
+    for perm in perms:
+      perm = list(perm)
       G_copy = G.copy()
-      G_copy.vs["divisor"] = difference(G_copy.vs["divisor"], div)
+      G_copy.vs["divisor"] = difference(G_copy.vs["divisor"], perm)
       
-      dhars_burning(G_copy, str(graphIndex) + "_" + str(div), outputsCWD)
-      # if not result:
-      #   break
+      result = dhars_burning(G_copy, str(graphIndex) + "_" + str(perm), outputsCWD)
+      if not result:
+        break
