@@ -69,8 +69,7 @@ def rank(G, index, g):
     # case 3
     if g <= deg and deg <= (2 * g) - 2:
         KG = G.copy()
-        KG.vs["divisor"] = canonical(G)
-        
+        KG.vs["divisor"] = canonical(G)        
         
         G_diff = G.copy()
         

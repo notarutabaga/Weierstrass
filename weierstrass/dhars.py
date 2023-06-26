@@ -1,5 +1,6 @@
 import random
 import igraph as ig
+import matplotlib.pyplot as plt
 
 # returns the degree of the divisor (ie sum of chips distrtibuted)
 def degree(divisor):
@@ -49,6 +50,9 @@ def dhars_burning(G):
         G.vs[q.index]["divisor"] -= G.degree(q)
         for v in G.neighbors(q): 
             G.vs[v]["divisor"] += 1
+    
+    G.vs["burned"] = False
+    G.es["burned"] = False
            
     # continue the burning and firing process until D is effective or the entire graph is burned
     while not is_effective(G.vs["divisor"]) and not is_burned(G.vs["burned"]):
@@ -125,6 +129,8 @@ def dhars_burning(G):
                     if G.es[edge]["burned"]:
                         G.vs[node.index]["divisor"] -= 1
                         G.vs[target.index]["divisor"] += 1
+    
+    plt.show()
     
     # reset
     G.vs["burned"] = False
